@@ -1,0 +1,25 @@
+# Cada modulo tiene su propio repositorio git independiente.
+# Se excluyen aqui para que este repo versione solo la capa de orquestacion.
+/Backend/
+/App-Movil/
+/Sitio-Administrativo/
+
+# Preferencias locales de permisos, no compartibles
+.claude/settings.local.json
+
+# Informes internos: documentan vulnerabilidades sin corregir de un sistema
+# en produccion. Se conservan en disco, fuera del control de versiones.
+/reports/
+
+# Documentacion e informes del cliente: material confidencial y binarios
+# (.docx, .xlsx) que git no sabe versionar de forma util.
+/docs/
+
+# Sistema operativo / editores
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+
+# Temporales de Office al abrir los documentos de docs/
+~$*

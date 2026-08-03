@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=$(cat); printf '%s' \"$d\" | grep -qiE '(levantar|levanta|subir|sube|bajar|baja|detener|apagar|apaga)[^a-zA-Z]+(el[^a-zA-Z]+)?legacy' || exit 0; printf '%s' \"$d\" | powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'C:\\code\\legacy\\.claude\\hooks\\legacy-control.ps1'",
+            "timeout": 120,
+            "statusMessage": "Orden Legacy..."
+          }
+        ]
+      }
+    ]
+  }
+}
