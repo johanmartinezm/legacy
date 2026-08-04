@@ -14,7 +14,16 @@ Monorepo de **Legacy Network**: plataforma de comunidad y membresía con eventos
 | `Sitio-Administrativo/` | Angular 18 + Material | Back-office, puerto 4200 |
 | `App-Movil/` | Flutter (iOS, Android, web) | App de usuario final |
 
-**No hay control de versiones.** Ninguna de las tres carpetas es un repositorio git. No existe historial ni forma de revertir: verifica antes de sobrescribir.
+**Cuatro repositorios git independientes, no submódulos.** Esta carpeta versiona solo la capa de orquestación (`levantar.ps1`, este archivo, las skills compartidas) y excluye las tres subcarpetas en su `.gitignore`; cada módulo tiene su propio historial y su propio remoto:
+
+| Carpeta | Remoto |
+|---|---|
+| raíz | `github.com/johanmartinezm/legacy` |
+| `Backend/` | `github.com/johanmartinezm/legacy-Backend` |
+| `App-Movil/` | `github.com/johanmartinezm/legacy-App-Movil` |
+| `Sitio-Administrativo/` | `github.com/johanmartinezm/legacy-Sitio-Administrativo` |
+
+Los cuatro son **públicos**. Ningún comando de git en la raíz alcanza a los módulos: para operar sobre uno hay que usar `git -C <carpeta>` o entrar en él. El historial arranca en el commit inicial del 3 de agosto de 2026 — no hay nada anterior, así que sigue verificando antes de sobrescribir cualquier archivo que no esté versionado.
 
 ## Levantar el entorno
 
@@ -27,6 +36,14 @@ Hay un script que orquesta todo, es idempotente y no borra datos:
 ```
 
 Levanta Postgres en Docker (contenedor `legacy_db`, credenciales `dba`/`123`, base `applegacy`), carga el esquema solo si la base está vacía, y abre cada servidor en su propia ventana. Existe también un hook en `.claude/settings.json` que ejecuta el script cuando el usuario escribe "levantar legacy" o "bajar legacy".
+
+## Desplegar
+
+Cada módulo tiene su propia guía en `<módulo>/DESPLIEGUE.md`, con los pasos, las verificaciones y las trampas propias de cada uno. Consúltala antes de tocar nada relacionado con producción.
+
+En el servidor conviven tres contenedores en la red Docker externa `proxy-net`, detrás de un HAProxy con Let's Encrypt que **vive en un proyecto aparte, fuera de este monorepo**: `legacy_frontend` (el panel Angular en la raíz de `https://legacy.intelyclick.com`), `legacy_backend` (la API en `/api/...`) y `legacy_db`. Ni el backend ni el frontend publican puertos en el host.
+
+Ninguno de los dos `Dockerfile` compila: ambos copian artefactos ya construidos (`server_linux` y `dist/legacy-app/browser`). Saltarse el paso de compilación publica la versión anterior sin ningún aviso.
 
 ## Comandos por módulo
 
@@ -110,7 +127,9 @@ Hay estructura duplicada heredada: `lib/ui/screens/forums` (vacío) junto a `lib
 
 `core/` (interceptor de auth, servicios, modelos, layout) y `features/` (una carpeta por módulo de administración). Rutas en `app.routes.ts`, providers en `app.config.ts`.
 
-**Solo existe `src/environments/environment.ts`** y `angular.json` no define `fileReplacements`, así que el build de producción también apunta a `http://localhost:8080`. Hay que resolverlo antes de desplegar.
+**La URL de la API se resuelve en tiempo de ejecución, no en el build.** `ConfigService` carga `src/assets/config/config.json` con un `APP_INITIALIZER` (`app.config.ts`) y todos los servicios leen `this.config.apiUrl`; ese archivo ya apunta a producción y se puede cambiar sin recompilar. `src/environments/environment.ts` existe pero solo lo importa `core/services/payment.service.ts`, que por eso apunta a `http://localhost:8080` incluso en producción — el arreglo es pasar ese servicio a `ConfigService`, no crear `environment.prod.ts`.
+
+Cuidado con la duplicación: `angular.json` copia `public/**` y `src/assets` al mismo destino, y ambos contienen un `assets/config/config.json`. Hoy son idénticos; si editas uno solo, no está definido cuál gana.
 
 ## Convenciones del proyecto
 
@@ -124,6 +143,17 @@ Hay estructura duplicada heredada: `lib/ui/screens/forums` (vacío) junto a `lib
 
 Los informes puntuales van en `reports/AAAAMMDD_nombre.md`; los planes técnicos previos a implementar, en `App-Movil/docs/` e `App-Movil/implementaciones/`.
 
+**Skills disponibles.** Cada repositorio versiona las suyas en `.claude/skills/`:
+
+| Skill | Dónde | Para qué |
+|---|---|---|
+| `verificar-contratos-api` | raíz | cruzar las rutas del backend con las que llaman la app y el panel |
+| `nuevo-endpoint` | `Backend/` | el corte vertical completo de un endpoint, hasta registrarlo en `main.go` |
+| `nuevo-modulo-admin` | `Sitio-Administrativo/` | un módulo CRUD siguiendo el patrón de `features/admin/banners` |
+| `preflight-release` | `App-Movil/` | comprobaciones antes de compilar o publicar un release |
+
+Solo la de la raíz se carga al abrir Claude Code aquí; las de los módulos aparecen al trabajar dentro de su carpeta, que es como se usan esos repositorios por separado.
+
 ## Desalineaciones conocidas
 
 Al tocar estas zonas, ten presente que ya están rotas:
@@ -133,9 +163,15 @@ Al tocar estas zonas, ten presente que ya están rotas:
 - Las notificaciones push solo se envían manualmente desde el panel. Ni crear un evento, ni publicar contenido, ni enviar un mensaje de chat disparan una notificación.
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
 - Sin `firebase-service-account.json` en `Backend/`, FCM arranca en modo mock y las notificaciones se escriben en consola en lugar de enviarse.
+- La subida automatizada a Play Store apunta a otra aplicación: `android/fastlane/Appfile` declara `com.legacynetworkco.app` y el build produce `co.legacynetwork.legacyapp` (`android/app/build.gradle.kts:37`). El bueno es el del `build.gradle.kts`, que es el que ya está firmado y publicado.
+- En iOS, el proyecto Xcode declara `IPHONEOS_DEPLOYMENT_TARGET = 13.0` y el `Podfile` exige `platform :ios, '15.0'`; además `Runner.entitlements` tiene `aps-environment` en `development`, con lo que las push no llegan en builds distribuidos.
 
 ## Seguridad
 
+**Los cuatro repositorios son públicos.** Todo lo que se versione queda expuesto: antes de añadir un archivo con configuración, comprueba que esté cubierto por el `.gitignore` del módulo. Hoy están protegidos `Backend/{config.yaml, config.docker.yaml, .env, *-service-account.json}`, `App-Movil/android/{key.properties, api-key.json, **/*.jks}` y, en la raíz, `reports/` y `docs/`.
+
 `config.yaml`, `config.docker.yaml` y `.env` contienen secretos reales en texto plano (contraseña SSH de root del servidor, credenciales de Credibanco), y la `encryption_key` y el `jwt_secret` siguen con los valores de ejemplo. No propagues esos valores a archivos nuevos ni los incluyas en salidas; si trabajas en configuración, muévelos a variables de entorno.
+
+`config.docker.yaml` —el que corre en producción— **no define `firebase.google_client_id`**, aunque `config.yaml` sí. Ese valor llega a `idtoken.Validate(ctx, idToken, s.googleClientID)` (`auth_service.go:195`), y con la audiencia vacía la librería omite la comprobación del campo `aud`: se verifica que el token es de Google, pero no que se emitiera para esta aplicación.
 
 Las consultas SQL están parametrizadas. No hay sanitización de HTML, ni protección CSRF, y el CORS está en `AllowedOrigins: "*"` con `AllowCredentials: true`.
