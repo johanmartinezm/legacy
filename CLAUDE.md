@@ -163,7 +163,6 @@ Al tocar estas zonas, ten presente que ya están rotas:
 - Las notificaciones push solo se envían manualmente desde el panel. Ni crear un evento, ni publicar contenido, ni enviar un mensaje de chat disparan una notificación.
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
 - Sin `firebase-service-account.json` en `Backend/`, FCM arranca en modo mock y las notificaciones se escriben en consola en lugar de enviarse.
-- La subida automatizada a Play Store apunta a otra aplicación: `android/fastlane/Appfile` declara `com.legacynetworkco.app` y el build produce `co.legacynetwork.legacyapp` (`android/app/build.gradle.kts:37`). El bueno es el del `build.gradle.kts`, que es el que ya está firmado y publicado.
 - En iOS, el proyecto Xcode declara `IPHONEOS_DEPLOYMENT_TARGET = 13.0` y el `Podfile` exige `platform :ios, '15.0'`; además `Runner.entitlements` tiene `aps-environment` en `development`, con lo que las push no llegan en builds distribuidos.
 
 ## Seguridad
