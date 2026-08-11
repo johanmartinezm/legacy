@@ -9,15 +9,21 @@ En este proyecto los tres módulos viven en repositorios separados y nada valida
 coincidan. El compilador de Go, `go vet` y `flutter analyze` no lo detectan: una ruta desalineada
 solo se manifiesta como 404 en tiempo de ejecución, y a veces ni siquiera como error visible.
 
-Casos reales que esta verificación habría detectado:
+Casos reales que esta verificación detectó. Los resueltos se arreglaron **registrando también la
+ruta que ya llamaba el cliente**, no cambiando el cliente: la app y el panel desplegados no se
+actualizan a la vez que el servidor, así que quitar la ruta vieja rompería a quien no haya
+actualizado. Por eso `main.go` registra hoy varias formas de la misma ruta a propósito.
 
-| Cliente | Llamaba a | El backend expone |
+| Cliente | Llama a | Estado |
 |---|---|---|
-| Flutter `auth_service.dart:97` | `/api/auth/social-login` | `/social-login` |
-| Flutter `auth_service.dart:279` | `/api/resend-verification` | `/resend-verification` |
-| Flutter `forum_thread_screen.dart:90` | `/images/upload` | nada |
-| Angular `auth.service.ts:58` | `/api/verify-email` | `/verify-email` |
-| — | — | `ImageHandler.UploadImage` implementado y nunca registrado |
+| Flutter `auth_service.dart:98` | `/api/auth/social-login` | ✅ resuelto — `main.go:181` la registra junto a `/social-login` |
+| Flutter `auth_service.dart:316` | `/api/auth/resend-verification` | ✅ resuelto — `main.go:183` |
+| Angular `auth.service.ts:58` | `/api/verify-email` | ✅ resuelto — `main.go:187`, añadida por el panel ya desplegado |
+| Flutter `forum_thread_screen.dart:90` | `/images/upload` | ❌ **vigente** — el backend no registra nada ahí |
+| — | — | ❌ **vigente** — `ImageHandler.UploadImage` implementado y nunca registrado |
+
+Los dos últimos son el mismo fallo visto desde los dos lados: la subida de imágenes de los foros
+llama a un endpoint cuyo handler existe, compila y tiene tests, pero no está en `main.go`.
 
 ## Procedimiento
 
@@ -79,7 +85,9 @@ autenticación, así que **no** es una desalineación.
 
 ## Trampa conocida
 
-Un 404 no siempre se ve como error. En `App-Movil/lib/domain/providers/auth_provider.dart:186` el
+Un 404 no siempre se ve como error. En `App-Movil/lib/domain/providers/auth_provider.dart:266` el
 código interpreta el 404 del login social como "usuario no registrado" y deriva a la pantalla de
-registro. El fallo parece comportamiento intencional, y por eso nadie lo reportó durante meses.
-Cuando encuentres una ruta rota, revisa además cómo trata el cliente ese código de estado.
+registro. Mientras la ruta estuvo desalineada, el fallo parecía comportamiento intencional, y por
+eso nadie lo reportó durante meses. **Ese `if` sigue en el código**: la ruta ya responde, pero
+cualquier 404 futuro de ese endpoint volvería a disfrazarse de "usuario nuevo". Cuando encuentres
+una ruta rota, revisa además cómo trata el cliente ese código de estado.

@@ -158,12 +158,11 @@ Solo la de la raíz se carga al abrir Claude Code aquí; las de los módulos apa
 
 Al tocar estas zonas, ten presente que ya están rotas:
 
-- La app llama a `/api/auth/social-login` (`auth_service.dart:97`) y a `/api/resend-verification` (`auth_service.dart:279`); el backend expone `/social-login` y `/resend-verification`. Ambas dan 404.
 - El panel administrativo no tiene subida de archivos: los campos de imagen son texto donde se pega una URL.
-- Las notificaciones push solo se envían manualmente desde el panel. Ni crear un evento, ni publicar contenido, ni enviar un mensaje de chat disparan una notificación.
+- Un mensaje de chat no dispara ninguna notificación. Crear un evento y publicar contenido sí avisan al tópico `all` (`handler/http/avisos.go`), pero el chat no.
+- Al tocar una notificación, la app abre la bandeja `/notifications` (`main.dart:194`) y no la novedad: los `data` (`{type, id}`) que manda el backend no se usan para navegar.
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
 - Sin `firebase-service-account.json` en `Backend/`, FCM arranca en modo mock y las notificaciones se escriben en consola en lugar de enviarse.
-- En iOS, el proyecto Xcode declara `IPHONEOS_DEPLOYMENT_TARGET = 13.0` y el `Podfile` exige `platform :ios, '15.0'`; además `Runner.entitlements` tiene `aps-environment` en `development`, con lo que las push no llegan en builds distribuidos.
 
 ## Seguridad
 
