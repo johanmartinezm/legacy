@@ -23,3 +23,6 @@ Thumbs.db
 
 # Temporales de Office al abrir los documentos de docs/
 ~$*
+
+# Plugin de WooCommerce de terceros, guardado aqui solo como referencia
+woocommerce-rbspayment-credibanco*/
