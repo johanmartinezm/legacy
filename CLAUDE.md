@@ -95,7 +95,7 @@ adapter/storage/postgres            infrastructure/  firebase, email, websocket,
 
 `cmd/server/main.go` es el **único** lugar donde se instancian repositorios, servicios y handlers y donde se registran las rutas. Una funcionalidad nueva toca seis archivos en este orden: `domain` → `ports` → `postgres` → `services` → `handler/http` → **registrar la ruta en `main.go`**.
 
-Ese último paso es el que más se olvida. `ImageHandler.UploadImage` está escrito y probado pero nunca se registró, así que la carga de imágenes no existe en la práctica. Cuando agregues un handler, verifica que su ruta aparezca en `main.go`.
+Ese último paso es el que más se olvida: `ImageHandler.UploadImage` estuvo escrito y probado durante meses sin que nadie registrara su ruta, así que la carga de imágenes no existía en la práctica (resuelto el 2026-08-11). Cuando agregues un handler, verifica que su ruta aparezca en `main.go`.
 
 Las rutas se agrupan en cuatro bloques: públicas sin auth, públicas con `OptionalAuthMiddleware`, privadas con `AuthMiddleware`, y admin con `AdminOnly`.
 
@@ -158,7 +158,6 @@ Solo la de la raíz se carga al abrir Claude Code aquí; las de los módulos apa
 
 Al tocar estas zonas, ten presente que ya están rotas:
 
-- El panel administrativo no tiene subida de archivos: los campos de imagen son texto donde se pega una URL.
 - Un mensaje de chat no dispara ninguna notificación. Crear un evento y publicar contenido sí avisan al tópico `all` (`handler/http/avisos.go`), pero el chat no.
 - Al tocar una notificación, la app abre la bandeja `/notifications` (`main.dart:194`) y no la novedad: los `data` (`{type, id}`) que manda el backend no se usan para navegar.
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
