@@ -103,6 +103,8 @@ Las rutas se agrupan en cuatro bloques: públicas sin auth, públicas con `Optio
 
 **El hub de chat vive en memoria** (`infrastructure/websocket`, arrancado con `go chatHub.Run()`). El backend no se puede escalar horizontalmente sin romper el chat.
 
+**Los avisos push salen de dos sitios.** Las novedades —evento creado, contenido publicado— van al tópico `all` desde `handler/http/avisos.go`; el mensaje de chat va a los dispositivos del destinatario desde `core/services/chat_avisos.go`, con `SendToUser`, que no deja rastro en el historial del panel. Los dos mandan `{type, id}` en el `data` y la app los traduce a una pantalla en `domain/utils/notificacion_destino.dart`: al añadir un tipo nuevo hay que tocar ese archivo o la notificación abrirá la bandeja.
+
 **Base de datos:** esquemas separados `core`, `events`, `community`, `chat` (35 tablas). `scripts/schema.sql` es un dump de `pg_dump` y **no es idempotente** (empieza con `CREATE SCHEMA chat;` sin `IF NOT EXISTS`): solo sirve para una base vacía. Los cambios posteriores van como migraciones fechadas en `scripts/AAAAMMDD_descripcion.sql`, documentando en la cabecera el contexto, los archivos afectados y el error concreto que corrigen — sigue el formato de `20260731_add_synergies_comments_count.sql`.
 
 Ningún listado tiene paginación (`LIMIT`/`OFFSET` no aparece en los repositorios).
@@ -158,8 +160,6 @@ Solo la de la raíz se carga al abrir Claude Code aquí; las de los módulos apa
 
 Al tocar estas zonas, ten presente que ya están rotas:
 
-- Un mensaje de chat no dispara ninguna notificación. Crear un evento y publicar contenido sí avisan al tópico `all` (`handler/http/avisos.go`), pero el chat no.
-- Al tocar una notificación, la app abre la bandeja `/notifications` (`main.dart:194`) y no la novedad: los `data` (`{type, id}`) que manda el backend no se usan para navegar.
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
 - Sin `firebase-service-account.json` en `Backend/`, FCM arranca en modo mock y las notificaciones se escriben en consola en lugar de enviarse.
 
