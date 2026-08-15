@@ -162,6 +162,7 @@ Al tocar estas zonas, ten presente que ya están rotas:
 
 - El chat es estrictamente 1:1 (`chat.connections` con `requester_id`/`receiver_id`). No existe chat grupal; los "grupos" (`core.custom_groups`) sirven solo para segmentar envíos push.
 - Sin `firebase-service-account.json` en `Backend/`, FCM arranca en modo mock y las notificaciones se escriben en consola en lugar de enviarse.
+- El botón de **Legacy Test** (`App-Movil/lib/presentation/screens/comunidad/comunidad_screen.dart:94`) no hace nada al tocarlo, y está así en producción. **Se deja a propósito** —decisión del 2026-08-14— hasta que el cliente confirme si esa funcionalidad es necesaria: retirarlo obligaría a rehacerlo si la respuesta es que sí. Es el único `TODO` que queda en los tres repositorios de código; no lo trates como un descuido.
 
 ## Seguridad
 
