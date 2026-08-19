@@ -129,7 +129,7 @@ Hay estructura duplicada heredada: `lib/ui/screens/forums` (vacío) junto a `lib
 
 `core/` (interceptor de auth, servicios, modelos, layout) y `features/` (una carpeta por módulo de administración). Rutas en `app.routes.ts`, providers en `app.config.ts`.
 
-**La URL de la API se resuelve en tiempo de ejecución, no en el build.** `ConfigService` carga `src/assets/config/config.json` con un `APP_INITIALIZER` (`app.config.ts`) y todos los servicios leen `this.config.apiUrl`; ese archivo ya apunta a producción y se puede cambiar sin recompilar. `src/environments/environment.ts` existe pero solo lo importa `core/services/payment.service.ts`, que por eso apunta a `http://localhost:8080` incluso en producción — el arreglo es pasar ese servicio a `ConfigService`, no crear `environment.prod.ts`.
+**La URL de la API se resuelve en tiempo de ejecución, no en el build.** `ConfigService` carga `src/assets/config/config.json` con un `APP_INITIALIZER` (`app.config.ts`) y todos los servicios leen `this.config.apiUrl`; ese archivo ya apunta a producción y se puede cambiar sin recompilar. `src/environments/environment.ts` sigue existiendo con `http://localhost:8080` dentro, pero **ya no lo importa nadie**: `payment.service.ts`, que era el último, pasó a `ConfigService`. Comprobado el 2026-08-18. Si algún servicio nuevo lo importa, apuntará a localhost en producción; el arreglo es usar `ConfigService`, no crear `environment.prod.ts`.
 
 Cuidado con la duplicación: `angular.json` copia `public/**` y `src/assets` al mismo destino, y ambos contienen un `assets/config/config.json`. Hoy son idénticos; si editas uno solo, no está definido cuál gana.
 
