@@ -174,4 +174,12 @@ Al tocar estas zonas, ten presente que ya están rotas:
 
 **`config.docker.yaml` no está versionado y se edita en los dos sitios**, así que la copia local y la del servidor se desincronizan sin que nada avise. Compara los `sha256sum` antes de cualquier `scp`; la copia buena es la del servidor. Ya pasó una vez: `apple.bundle_id` se añadió solo allí y el siguiente despliegue lo habría borrado.
 
-Las consultas SQL están parametrizadas. No hay sanitización de HTML, ni protección CSRF, y el CORS está en `AllowedOrigins: "*"` con `AllowCredentials: true`.
+Las consultas SQL están parametrizadas. Sigue sin haber sanitización de HTML ni protección CSRF.
+
+**El CORS ya no está abierto.** `main.go` usa `AllowOriginFunc: origenPermitido`, que acepta
+`https://legacy.intelyclick.com` y cualquier `localhost`. Comprobado contra producción el 2026-08-26:
+un `OPTIONS` con `Origin: https://sitio-malicioso.com` no recibe cabecera
+`Access-Control-Allow-Origin` —el navegador lo bloquea— y el origen legítimo sí, con
+`Allow-Credentials: true`. La app móvil no se ve afectada: un cliente nativo no manda `Origin` y CORS
+no interviene. Si el panel o la app web se publican en otro dominio, hay que añadirlo a
+`origenesDeConfianza` o dejarán de funcionar.
