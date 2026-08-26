@@ -107,7 +107,23 @@ Las rutas se agrupan en cuatro bloques: públicas sin auth, públicas con `Optio
 
 **Base de datos:** esquemas separados `core`, `events`, `community`, `chat` (35 tablas). `scripts/schema.sql` es un dump de `pg_dump` y **no es idempotente** (empieza con `CREATE SCHEMA chat;` sin `IF NOT EXISTS`): solo sirve para una base vacía. Los cambios posteriores van como migraciones fechadas en `scripts/AAAAMMDD_descripcion.sql`, documentando en la cabecera el contexto, los archivos afectados y el error concreto que corrigen — sigue el formato de `20260731_add_synergies_comments_count.sql`.
 
-Ningún listado tiene paginación (`LIMIT`/`OFFSET` no aparece en los repositorios).
+**Paginación.** Los listados que crecen sin techo paginan con `?limit=` y `?offset=`, y publican el
+total en la cabecera `X-Total-Count` —no dentro del cuerpo: la respuesta sigue siendo un array plano
+porque hay apps publicadas que lo recorren directamente—. El ayudante común es
+`handler/http/paginacion.go`, con **techo de 200** se pida lo que se pida.
+
+Ya paginaban mensajes de chat, publicaciones de foro, sinergias e historial de avisos. El 2026-08-26
+se añadió a inscritos de un evento, usuarios y mensajes de contacto —los tres de `AdminOnly`, que es
+lo que permitió poner tamaño de página por defecto sin romper ninguna app instalada—.
+
+Dos cosas que conviene saber antes de paginar otro listado:
+
+- **El `ORDER BY` tiene que ser total** (añadir el `id` de desempate). Sin él, dos filas del mismo
+  instante pueden intercambiarse entre consultas y una página se salta una fila o repite otra.
+- **Lo cifrado no se puede ordenar ni buscar en SQL.** Por eso los inscritos de un evento se ordenan
+  por fecha y no por nombre, y por eso la pantalla que los busca pide todas las páginas
+  (`getAllEventRegistrants`) en vez de una: buscar en la página visible diría «no está» de alguien que
+  sí está, y el total recaudado mostraría una fracción.
 
 ### App Móvil: capas + Provider + go_router
 
