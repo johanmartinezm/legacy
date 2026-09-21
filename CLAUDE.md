@@ -25,6 +25,8 @@ Monorepo de **Legacy Network**: plataforma de comunidad y membresía con eventos
 
 Los cuatro son **públicos**. Ningún comando de git en la raíz alcanza a los módulos: para operar sobre uno hay que usar `git -C <carpeta>` o entrar en él. El historial arranca en el commit inicial del 3 de agosto de 2026 — no hay nada anterior, así que sigue verificando antes de sobrescribir cualquier archivo que no esté versionado.
 
+La cuenta de `gh` para este proyecto es **`johanmartinezm`**, la dueña de los cuatro repositorios. En la máquina hay otra (`johanmartinezcolombo`) con la que leer funciona —los repos son públicos— pero lanzar un workflow falla con `HTTP 403: Must have admin rights to Repository`, un error que no menciona la cuenta. Si aparece: `gh auth switch --user johanmartinezm`.
+
 ## Levantar el entorno
 
 Hay un script que orquesta todo, es idempotente y no borra datos:
