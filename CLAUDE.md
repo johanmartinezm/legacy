@@ -43,7 +43,9 @@ Levanta Postgres en Docker (contenedor `legacy_db`, credenciales `dba`/`123`, ba
 
 Cada módulo tiene su propia guía en `<módulo>/DESPLIEGUE.md`, con los pasos, las verificaciones y las trampas propias de cada uno. Consúltala antes de tocar nada relacionado con producción.
 
-En el servidor conviven tres contenedores en la red Docker externa `proxy-net`, detrás de un HAProxy con Let's Encrypt que **vive en un proyecto aparte, fuera de este monorepo**: `legacy_frontend` (el panel Angular en la raíz de `https://legacy.intelyclick.com`), `legacy_backend` (la API en `/api/...`) y `legacy_db`. Ni el backend ni el frontend publican puertos en el host.
+**Desde el 2026-10-02 todos los despliegues van al servidor nuevo**, el que sirve `https://app.legacynetworkco.com` detrás de Cloudflare; el destino lo fija `SERVER_IP` en `Backend/.env`. El de `legacy.intelyclick.com` es el anterior y ya no se despliega en él.
+
+En el servidor conviven tres contenedores en la red Docker externa `proxy-net`, detrás de un HAProxy con Let's Encrypt que **vive en un proyecto aparte, fuera de este monorepo**: `legacy_frontend` (el panel Angular en la raíz de `https://app.legacynetworkco.com`), `legacy_backend` (la API en `/api/...`) y `legacy_db`. Ni el backend ni el frontend publican puertos en el host.
 
 Ninguno de los dos `Dockerfile` compila: ambos copian artefactos ya construidos (`server_linux` y `dist/legacy-app/browser`). Saltarse el paso de compilación publica la versión anterior sin ningún aviso.
 
@@ -139,7 +141,7 @@ presentation/ pantallas y widgets
 
 `main.dart` concentra el bootstrap: `ConfigService.initialize()`, Firebase, el árbol de `MultiProvider` y todas las rutas de `go_router`.
 
-**Configuración por JSON, no por `--dart-define`.** `assets/config/config.json` define las URLs; hay tres variantes en la misma carpeta (`config.json`, `.develop`, `.prod`) y se cambia copiando una sobre otra. El archivo por defecto apunta a **producción** (`https://legacy.intelyclick.com`); para trabajar en local hay que copiar `config.json.develop` encima. `ConfigService` resuelve la URL por plataforma: `10.0.2.2` en Android (emulador), `localhost` en web e iOS.
+**Configuración por JSON, no por `--dart-define`.** `assets/config/config.json` define las URLs; hay tres variantes en la misma carpeta (`config.json`, `.develop`, `.prod`) y se cambia copiando una sobre otra. El archivo por defecto apunta a **producción** (`https://app.legacynetworkco.com`); para trabajar en local hay que copiar `config.json.develop` encima. `ConfigService` resuelve la URL por plataforma: `10.0.2.2` en Android (emulador), `localhost` en web e iOS.
 
 Además de la API propia, la app consume dos GraphQL externos: `lso.school/graphql` y `legacynetworkco.com/graphql` (WordPress, fuente de las noticias).
 
@@ -197,7 +199,7 @@ Al tocar estas zonas, ten presente que ya están rotas:
 Las consultas SQL están parametrizadas. Sigue sin haber sanitización de HTML ni protección CSRF.
 
 **El CORS ya no está abierto.** `main.go` usa `AllowOriginFunc: origenPermitido`, que acepta
-`https://legacy.intelyclick.com` y cualquier `localhost`. Comprobado contra producción el 2026-08-26:
+`https://app.legacynetworkco.com`, `https://legacy.intelyclick.com` y cualquier `localhost`. Comprobado contra producción el 2026-08-26:
 un `OPTIONS` con `Origin: https://sitio-malicioso.com` no recibe cabecera
 `Access-Control-Allow-Origin` —el navegador lo bloquea— y el origen legítimo sí, con
 `Allow-Credentials: true`. La app móvil no se ve afectada: un cliente nativo no manda `Origin` y CORS
