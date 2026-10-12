@@ -26,3 +26,6 @@ Thumbs.db
 
 # Plugin de WooCommerce de terceros, guardado aqui solo como referencia
 woocommerce-rbspayment-credibanco*/
+
+# Capturas y archivos de paso que el usuario deja para revisar. Nunca se versionan.
+/temp/
