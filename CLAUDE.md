@@ -43,7 +43,7 @@ Levanta Postgres en Docker (contenedor `legacy_db`, credenciales `dba`/`123`, ba
 
 Cada módulo tiene su propia guía en `<módulo>/DESPLIEGUE.md`, con los pasos, las verificaciones y las trampas propias de cada uno. Consúltala antes de tocar nada relacionado con producción.
 
-**Desde el 2026-10-02 todos los despliegues van al servidor nuevo**, el que sirve `https://app.legacynetworkco.com` detrás de Cloudflare; el destino lo fija `SERVER_IP` en `Backend/.env`. El de `legacy.intelyclick.com` es el anterior y ya no se despliega en él.
+**Desde el 2026-10-02 todos los despliegues van al servidor nuevo**, el que sirve `https://app.legacynetworkco.com` detrás de Cloudflare; el destino lo fija `SERVER_IP` en `Backend/.env`. El servidor anterior ya no se usa y no se despliega en él.
 
 En el servidor conviven tres contenedores en la red Docker externa `proxy-net`, detrás de un HAProxy con Let's Encrypt que **vive en un proyecto aparte, fuera de este monorepo**: `legacy_frontend` (el panel Angular en la raíz de `https://app.legacynetworkco.com`), `legacy_backend` (la API en `/api/...`) y `legacy_db`. Ni el backend ni el frontend publican puertos en el host.
 
@@ -199,7 +199,7 @@ Al tocar estas zonas, ten presente que ya están rotas:
 Las consultas SQL están parametrizadas. Sigue sin haber sanitización de HTML ni protección CSRF.
 
 **El CORS ya no está abierto.** `main.go` usa `AllowOriginFunc: origenPermitido`, que acepta
-`https://app.legacynetworkco.com`, `https://legacy.intelyclick.com` y cualquier `localhost`. Comprobado contra producción el 2026-08-26:
+`https://app.legacynetworkco.com` y cualquier `localhost`. Comprobado contra producción el 2026-08-26:
 un `OPTIONS` con `Origin: https://sitio-malicioso.com` no recibe cabecera
 `Access-Control-Allow-Origin` —el navegador lo bloquea— y el origen legítimo sí, con
 `Allow-Credentials: true`. La app móvil no se ve afectada: un cliente nativo no manda `Origin` y CORS
