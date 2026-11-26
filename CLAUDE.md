@@ -64,6 +64,12 @@ go test ./internal/core/services -run TestNombre -v   # un solo test
 
 **Ejecuta siempre desde `Backend/`**: `main.go` carga `config.yaml` con ruta relativa y muere al arrancar desde otro directorio.
 
+**En local, arranca con `LEGACY_CORREO_SIMULADO=1`** si vas a probar algo que escribe a alguien
+(aprobar o rechazar en la bandeja de Legacy Board, inscripciones, Contáctenos…). Las credenciales de
+Gmail del `config.yaml` local son las reales: sin esa variable, la prueba manda un correo de verdad
+desde la cuenta del proyecto. Con ella, el backend escribe `[CORREO SIMULADO]` en el registro y no envía
+nada. El push ya se simula solo en local, porque falta `firebase-service-account.json`.
+
 `internal/adapter/storage/postgres/test_update_test.go` es la única prueba de **integración**: necesita una base de datos de verdad. Desde el 2026-09-03 **se salta sola** si no hay ninguna a la que conectarse, en vez de dejar `go test ./...` en rojo permanente. Con la base local levantada corre y pasa; contra otra base, `LEGACY_TEST_DB_URL`.
 
 Antes fallaba siempre —cadena de conexión escrita a mano con el usuario `postgres` en vez de `dba`— y **arreglar solo eso habría sido peor**: cogía el primer usuario real de la base y le sobreescribía nombre, teléfono, país y documento sin restaurarlo. Ahora crea su propia cuenta desechable y la borra al terminar.
